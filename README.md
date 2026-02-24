@@ -15,7 +15,7 @@ To use this script, simply download or copy the `flutter_scaffold.sh` file into 
 ### Mac & Linux
 
 1. Make the script executable:
-   ```bash
+```bash
    chmod +x flutter_scaffold.sh
 
 ```
