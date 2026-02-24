@@ -4,18 +4,13 @@
 init_project() {
     echo "🏗️  Initializing Core Architecture in 'lib/'..."
     
-    # Create Core directories
     mkdir -p lib/core/constants
     mkdir -p lib/core/errors
     mkdir -p lib/core/network
     mkdir -p lib/core/theme
     mkdir -p lib/core/utils
     mkdir -p lib/core/widgets
-    
-    # Create base features directory
     mkdir -p lib/features
-
-    # Create dependency injection file
     touch lib/injection_container.dart
     
     echo "✅ Core architecture initialized successfully!"
@@ -25,15 +20,12 @@ init_project() {
 create_feature() {
     read -p "Enter the feature name (e.g., authentication, user_profile): " feature_name
     
-    # Basic validation to ensure the user typed something
     if [ -z "$feature_name" ]; then
         echo "❌ Error: Feature name cannot be empty."
         return
     fi
 
-    # Convert to lowercase to maintain Dart naming conventions
     feature_name=$(echo "$feature_name" | tr '[:upper:]' '[:lower:]')
-    
     BASE_DIR="lib/features/$feature_name"
 
     if [ -d "$BASE_DIR" ]; then
@@ -41,24 +33,90 @@ create_feature() {
         return
     fi
 
-    echo "✨ Generating feature '$feature_name'..."
+    echo "✨ Generating feature folders for '$feature_name'..."
 
-    # Create Data Layer
+    # Create directories
     mkdir -p "$BASE_DIR/data/datasources"
     mkdir -p "$BASE_DIR/data/models"
     mkdir -p "$BASE_DIR/data/repositories"
-
-    # Create Domain Layer
     mkdir -p "$BASE_DIR/domain/entities"
     mkdir -p "$BASE_DIR/domain/repositories"
     mkdir -p "$BASE_DIR/domain/usecases"
-
-    # Create Presentation Layer
     mkdir -p "$BASE_DIR/presentation/bloc"
     mkdir -p "$BASE_DIR/presentation/pages"
     mkdir -p "$BASE_DIR/presentation/widgets"
 
-    echo "✅ Feature '$feature_name' generated successfully at $BASE_DIR!"
+    # Ask user if they want boilerplate files
+    read -p "Do you want to generate example boilerplate files for this feature? (y/n): " gen_files
+
+    if [[ "$gen_files" == "y" || "$gen_files" == "Y" ]]; then
+        echo "📄 Generating Dart files..."
+
+        # Convert snake_case to PascalCase for Dart class names
+        class_name=$(echo "$feature_name" | awk -F_ '{for(i=1;i<=NF;i++) printf "%s", toupper(substr($i,1,1)) substr($i,2)} END {print ""}')
+
+        # 1. Domain Layer: Entity
+        cat <<EOF > "$BASE_DIR/domain/entities/${feature_name}.dart"
+class ${class_name}Entity {
+  const ${class_name}Entity();
+}
+EOF
+
+        # 2. Domain Layer: Repository Interface
+        cat <<EOF > "$BASE_DIR/domain/repositories/${feature_name}_repository.dart"
+import '../entities/${feature_name}.dart';
+
+abstract class ${class_name}Repository {
+  // Future<${class_name}Entity> get${class_name}();
+}
+EOF
+
+        # 3. Data Layer: Model
+        cat <<EOF > "$BASE_DIR/data/models/${feature_name}_model.dart"
+import '../../domain/entities/${feature_name}.dart';
+
+class ${class_name}Model extends ${class_name}Entity {
+  const ${class_name}Model();
+
+  factory ${class_name}Model.fromJson(Map<String, dynamic> json) {
+    return const ${class_name}Model();
+  }
+}
+EOF
+
+        # 4. Data Layer: Repository Implementation
+        cat <<EOF > "$BASE_DIR/data/repositories/${feature_name}_repository_impl.dart"
+import '../../domain/repositories/${feature_name}_repository.dart';
+
+class ${class_name}RepositoryImpl implements ${class_name}Repository {
+  ${class_name}RepositoryImpl();
+}
+EOF
+
+        # 5. Presentation Layer: Page
+        cat <<EOF > "$BASE_DIR/presentation/pages/${feature_name}_page.dart"
+import 'package:flutter/material.dart';
+
+class ${class_name}Page extends StatelessWidget {
+  const ${class_name}Page({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('${class_name}'),
+      ),
+      body: const Center(
+        child: Text('Welcome to ${class_name} Page'),
+      ),
+    );
+  }
+}
+EOF
+        echo "✅ Boilerplate files created!"
+    else
+        echo "✅ Folders created without files."
+    fi
 }
 
 # Main Menu Loop
@@ -87,5 +145,5 @@ while true; do
             echo "❌ Invalid option. Please select 1, 2, or 3."
             ;;
     esac
-    echo "" # Print a blank line for readability before the menu repeats
+    echo ""
 done
